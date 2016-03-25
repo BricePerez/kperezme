@@ -1,0 +1,33 @@
+aside .tags li,
+.pagination .active,
+.pagination li:hover,
+.color > span,
+.button,
+.title_section h1 ,
+#button_download,
+.social li{
+	background: #fff;
+	background-color: #fff;
+}
+.img-preview {
+	background: #fff;
+    background: rgba(255,255,255,0.8)  no-repeat center center;   
+}
+a,
+.post a h3:hover,
+.title_resalt,
+ul.check li i{
+	color: #fff;
+}
+
+.logo{
+	border-top: 3px solid #fff;
+}
+.is-sticky{
+	background: #fff;
+	background: rgba(255,255,255,0.9);
+}
+
+.title_section .arrow_title{
+	background: url("arrow_title.png") no-repeat;
+}

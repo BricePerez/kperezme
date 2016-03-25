@@ -1,0 +1,151 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the block_id module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function block_id_install() {
+  $schema['block'] = array();
+  block_id_schema_alter($schema);
+  foreach ($schema['block']['fields'] as $field => $spec) {
+    if (db_field_exists('block', $field)) {
+      watchdog('system', 'Module install: Attempt to recreate field: "%field", when it already exists.', array('%field' => $field), WATCHDOG_WARNING);
+    }
+    else {
+      db_add_field('block', $field, $spec);
+    }
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function block_id_uninstall() {
+  $schema['block'] = array();
+  block_id_schema_alter($schema);
+  foreach ($schema['block']['fields'] as $field => $specs) {
+    db_drop_field('block', $field);
+  }
+}
+
+/**
+ * Implements hook_schema_alter().
+ *
+ * Other modules, such as i18n_block also modify the block database table.
+ */
+function block_id_schema_alter(&$schema) {
+  if (isset($schema['block'])) {
+    $schema['block']['fields']['block_id'] = array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+      'description' => 'String containing the classes for the block.',
+    );
+  }
+}
+
+/**
+ * Alters the structure of {block_id} schema.
+ */
+function block_id_update_7100() {
+  // Check if the block_id table exists to prevent installation profiles
+  // from running this update for versions without the block_id table.
+  if (db_table_exists('block_id')) {
+    // Update the schema.
+    db_drop_primary_key('block_id');
+
+    db_change_field('block_id', 'module', 'module',
+      array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The module to which the block belongs.',
+      )
+    );
+
+    db_change_field('block_id', 'delta', 'delta',
+      array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+        'description' => "The ID of the module's block.",
+      )
+    );
+
+    db_change_field('block_id', 'block_id', 'block_id',
+      array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'String containing the classes for the block.',
+      )
+    );
+
+    // Restore the primary key.
+    db_add_primary_key('block_id', array('module', 'delta'));
+  }
+}
+
+/**
+ * Fix too long primary key length in {block_id}.
+ */
+function block_id_update_7101() {
+  // Ensure the block_id table exists, which is not true for all versions.
+  if (db_table_exists('block_id')) {
+    // Drop current primary key.
+    db_drop_primary_key('block_id');
+
+    db_change_field('block_id', 'module', 'module', array(
+      'type' => 'varchar',
+      'length' => 64,
+      'not null' => TRUE,
+      'default' => '',
+      'description' => 'The module to which the block belongs.',
+    ));
+    db_change_field('block_id', 'delta', 'delta', array(
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => TRUE,
+      'default' => '',
+      'description' => "The ID of the module's block.",
+    ));
+
+    // Create new primary key.
+    db_add_primary_key('block_id', array('module', 'delta'));
+  }
+}
+
+/**
+ * Migration from block_id table to new field block_id in core block table.
+ */
+function block_id_update_7103() {
+  if (!db_field_exists('block', 'block_id')) {
+    $schema['block'] = array();
+    block_id_schema_alter($schema);
+    foreach ($schema['block']['fields'] as $field => $specs) {
+      db_add_field('block', $field, $specs);
+    }
+  }
+
+  if (db_table_exists('block_id')) {
+    // Migrate all existing records from block_id table to block table.
+    $result = db_query('SELECT block_id, module, delta FROM {block_id}');
+    while ($record = $result->fetchObject()) {
+      db_update('block')
+        ->fields(array('block_id' => $record->block_id))
+        ->condition('module', $record->module)
+        ->condition('delta', $record->delta)
+        ->execute();
+    }
+    // Remove the block_id table.
+    db_drop_table('block_id');
+  }
+}
