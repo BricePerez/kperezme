@@ -193,8 +193,8 @@ jQuery(document).ready(function($) {
     map = new GMaps({
         position: "TOP_CENTER",
         el: '#map',
-        lat: 34.7487924,
-        lng: -86.670441,
+        lat: 36.1420018,
+        lng: -86.8016659,
         zoom: 13,
         zoomControl: true,
         zoomControlOpt: {
@@ -206,8 +206,8 @@ jQuery(document).ready(function($) {
     });
     // add address markers
     map.addMarker({
-        lat: 34.76243,
-        lng: -86.670441,
+        lat: 36.1420018,
+        lng: -86.8016659,
         title: 'Locale',
         infoWindow: {
             content: '<p> Huntsville , Alabama</p>'
